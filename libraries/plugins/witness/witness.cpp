@@ -36,6 +36,8 @@
 #include <fc/thread/thread.hpp>
 
 #include <iostream>
+#include <cstdlib>
+#include <ctime>
 
 using namespace steemit::witness_plugin;
 using std::string;
@@ -468,7 +470,6 @@ void witness_plugin::start_mining(
    const steemit::chain::signed_block& b )
 {
     static uint64_t seed = fc::time_point::now().time_since_epoch().count();
-    static uint64_t start = fc::city_hash64( (const char*)&seed, sizeof(seed) );
     chain::database& db = database();
 
     auto head_block_num  = b.block_num();
@@ -483,7 +484,8 @@ void witness_plugin::start_mining(
 
     auto stop = head_block_time + fc::seconds( STEEMIT_BLOCK_INTERVAL * 2 );
 
-    uint32_t thread_num = 0;
+    std::srand(std::time(0));
+
     uint32_t num_threads = _mining_threads;
     uint32_t target = db.get_pow_summary_target();
     const auto& acct_idx  = db.get_index_type< chain::account_index >().indices().get< chain::by_name >();
@@ -497,7 +499,7 @@ void witness_plugin::start_mining(
           chain::pow2 work;
           work.input.prev_block = block_id;
           work.input.worker_account = miner;
-          work.input.nonce = start + thread_num;
+          work.input.nonce = std::rand();
           op.props = _miner_prop_vote;
           while( true )
           {
@@ -546,7 +548,6 @@ void witness_plugin::start_mining(
              }
           }
        } );
-       thread_num++;
     }
 }
 
